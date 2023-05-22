@@ -2,7 +2,7 @@
 
 #librerias
 require(pacman)
-p_load(tidyverse,stargazer,coefplot,rio,skimr, sf, leaflet, tmaptools,ggmap,osmdata)
+p_load(tidyverse,stargazer,coefplot,rio,skimr, sf, leaflet, tmaptools,ggmap,osmdata, rvest)
 
 #datos
 df = import("input/data_regresiones.rds")
@@ -33,8 +33,8 @@ restaurantes <- opq(bbox = getbb("Bogota")) %>%
 parques <- opq(bbox = getbb("Bogota")) %>%
            add_osm_feature(key = "leisure", value = "park") %>%
            osmdata_sf() %>% .$osm_polygons %>% select(osm_id,name)
-mapa <- st_union(x=restaurantes, y=parques)
 
+mapa <- st_union(x=restaurantes, y=parques)
 
 #Visualizaciones
 leaflet() %>% addTiles() %>% addPolygons(data= bogota)
@@ -45,10 +45,19 @@ leaflet() %>% addTiles() %>% addCircles(data=restaurantes)
 geocode_OSM("calle 19a # 1-10", as.sf=T)
 
 
-
-
 #exportar 
 
 
+##WEB-SCRAPING Y PROCESAMIENTO DE TEXTO##
+
+url = "https://es.wikipedia.org/wiki/Departamentos_de_Colombia"
+my_html = read_html(url)
+class(my_html)
+
+my_html %>% html_element(xpath = '//*[@id="firstHeading"]/span') %>% html_text()
+
+tablas = my_html %>% html_table()
+tablaDEPA <- tablas[[4]]
+export(tablaDEPA, file= "output/tabla_departamentos.xlsx")
 
 
