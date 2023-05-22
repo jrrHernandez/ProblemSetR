@@ -33,16 +33,18 @@ restaurantes <- opq(bbox = getbb("Bogota")) %>%
 parques <- opq(bbox = getbb("Bogota")) %>%
            add_osm_feature(key = "leisure", value = "park") %>%
            osmdata_sf() %>% .$osm_polygons %>% select(osm_id,name)
+mapa <- st_union(x=restaurantes, y=parques)
 
 
 #Visualizaciones
-leaflet() %>% addTiles() %>% addPolygons(data= parques)
+leaflet() %>% addTiles() %>% addPolygons(data= bogota)
 leaflet() %>% addTiles() %>% addCircles(data=restaurantes)
 
-#geocodificar direcciones
-geocode_OSM("calle 27a #22-05", as.sf=T)
 
-qqta <- st_intersection(x= parques, y= restaurantes)
+#geocodificar direcciones
+geocode_OSM("calle 19a # 1-10", as.sf=T)
+
+
 
 
 #exportar 
