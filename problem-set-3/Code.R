@@ -2,7 +2,7 @@
 
 #librerias
 require(pacman)
-p_load(tidyverse,stargazer,coefplot,rio,skimr, sf, leaflet, tmaptools,ggmap,osmdata, rvest, wordcloud, purrr, dplyr, tm)
+p_load(tidyverse,stargazer,coefplot,rio,skimr, sf, leaflet, tmaptools,ggmap,osmdata, rvest, wordcloud, purrr, dplyr, tm, ggmap, maps, ggplot2, ggspatial,ggsn)
 
 #datos
 df = import("input/data_regresiones.rds")
@@ -25,6 +25,7 @@ stargazer(modelo_1,modelo_2,modelo_3,
 ##DATOS ESPACIALES##
 
 #descargar datos
+
 restaurantes <- opq(bbox = getbb("Bogota")) %>%
                 add_osm_feature(key = "amenity", value = "restaurant") %>%
                 osmdata_sf() %>% .$osm_points %>% select(osm_id, name)
@@ -34,18 +35,46 @@ parques <- opq(bbox = getbb("Bogota")) %>%
            add_osm_feature(key = "leisure", value = "park") %>%
            osmdata_sf() %>% .$osm_polygons %>% select(osm_id,name)
 
-mapa <- st_union(x=restaurantes, y=parques)
+direccion <- geocode_OSM("Carrera 6 15-88, Bogota", as.sf=T)
 
-#Visualizaciones
-leaflet() %>% addTiles() %>% addPolygons(data= bogota)
+
+
+  #Visualizaciones
+leaflet() %>% addTiles() %>% addPolygons(data= parques)
 leaflet() %>% addTiles() %>% addCircles(data=restaurantes)
 
+#Un solo mapa
+cordrestaurantes <- st_coordinates(restaurantes)
+cordparques<- st_coordinates(parques)
+restaurantes_df <- data.frame(LON = cordrestaurantes[, "X"], LAT= cordrestaurantes[, "Y"])
+parques_df <- data.frame(LONG = cordparques[, "X"], LATT= cordparques[, "Y"])
 
-#geocodificar direcciones
-geocode_OSM("calle 19a # 1-10", as.sf=T)
 
 
+bog <- opq(bbox = getbb("Bogota Colombia")) %>%
+  add_osm_feature(key="boundary", value="administrative") %>% 
+  osmdata_sf()
+
+bog <- bog$osm_multipolygons %>% subset(admin_level==9)
+mapa_final<-ggplot() + geom_sf(data=bog) +
+  geom_point(data = restaurantes_df, aes(x = LON , y = LAT), color = "red", size = 1) +
+  geom_polygon(data = parques_df, aes(x = LONG, y = LATT), fill = "darkgreen", alpha = 0.3) +
+  geom_point(data = direccion, aes(x = lon, y = lat), color = "blue", size = 4) +
+  labs(title = "Restaurantes, Parques y Dirección en Bogotá") +
+  theme_bw() + north(data = bog , location = "topleft") + scalebar(data = bog , dist = 5 , transform = T , dist_unit = "km") 
+
+osm_layer <- get_stamenmap(bbox = as.vector(st_bbox(bog)), 
+                           maptype="toner", source="osm", zoom=13)
+mapa2<- ggmap(osm_layer) + geom_sf(data=bog) +
+  geom_point(data = restaurantes_df, aes(x = LON , y = LAT), color = "red", size = 1) +
+  geom_polygon(data = parques_df, aes(x = LONG, y = LATT), fill = "green", alpha = 0.4) +
+  geom_point(data = direccion, aes(x = lon, y = lat), color = "blue", size = 4) +
+  labs(title = "Restaurantes, Parques y Dirección en Bogotá") +
+  theme_bw() + north(data = bog , location = "topleft") + 
+  scalebar(data = bog , dist = 5 , transform = T , dist_unit = "km")
+mapa_final <- mapa_final 
 #exportar 
+ggsave("output/mapa_amenities.png",mapa_final)
 
 
 ##WEB-SCRAPING Y PROCESAMIENTO DE TEXTO##
