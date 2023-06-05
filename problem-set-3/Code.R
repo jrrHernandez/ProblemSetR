@@ -63,16 +63,8 @@ mapa_final<-ggplot() + geom_sf(data=bog) +
   labs(title = "Restaurantes, Parques y Dirección en Bogotá") +
   theme_bw() + north(data = bog , location = "topleft") + scalebar(data = bog , dist = 5 , transform = T , dist_unit = "km") 
 
-osm_layer <- get_stamenmap(bbox = as.vector(st_bbox(bog)), 
-                           maptype="toner", source="osm", zoom=13)
-mapa2<- ggmap(osm_layer) + geom_sf(data=bog) +
-  geom_point(data = restaurantes_df, aes(x = LON , y = LAT), color = "red", size = 1) +
-  geom_polygon(data = parques_df, aes(x = LONG, y = LATT), fill = "green", alpha = 0.4) +
-  geom_point(data = direccion, aes(x = lon, y = lat), color = "blue", size = 4) +
-  labs(title = "Restaurantes, Parques y Dirección en Bogotá") +
-  theme_bw() + north(data = bog , location = "topleft") + 
-  scalebar(data = bog , dist = 5 , transform = T , dist_unit = "km")
-mapa_final <- mapa_final 
+
+
 #exportar 
 ggsave("output/mapa_amenities.png",mapa_final)
 
